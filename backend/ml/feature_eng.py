@@ -65,3 +65,4 @@ def extract_features(logs_df, users_df):
         })
 
     return pd.DataFrame(rows)
+ 

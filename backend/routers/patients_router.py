@@ -111,3 +111,4 @@ def create_patient(body: PatientCreate, db: Session = Depends(get_db), _: User =
     db.commit()
     db.refresh(p)
     return fmt(p)
+ 

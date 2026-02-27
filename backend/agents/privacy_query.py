@@ -96,3 +96,4 @@ def ask(db, question, requesting_user):
         },
         "timestamp": datetime.utcnow().isoformat(),
     }
+ 

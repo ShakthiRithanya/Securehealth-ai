@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #0a0f1e;
+  color: #e2e8f0;
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4f46e5;
+}
+
+@layer components {
+  .card {
+    @apply bg-slate-800 border border-slate-700 rounded-xl p-5;
+  }
+
+  .btn-primary {
+    @apply bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent hover:bg-slate-700 text-slate-300 hover:text-white font-medium py-2 px-4 rounded-lg transition-all duration-200;
+  }
+
+  .input-dark {
+    @apply bg-slate-900 border border-slate-600 text-slate-100 rounded-lg px-4 py-2 w-full focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder-slate-500;
+  }
+
+  .badge-low {
+    @apply bg-emerald-500/20 text-emerald-400 text-xs font-semibold px-2 py-0.5 rounded-full;
+  }
+
+  .badge-medium {
+    @apply bg-amber-500/20 text-amber-400 text-xs font-semibold px-2 py-0.5 rounded-full;
+  }
+
+  .badge-high {
+    @apply bg-orange-500/20 text-orange-400 text-xs font-semibold px-2 py-0.5 rounded-full;
+  }
+
+  .badge-critical {
+    @apply bg-red-500/20 text-red-400 text-xs font-semibold px-2 py-0.5 rounded-full;
+  }
+}

@@ -15,3 +15,4 @@ ANOMALY_CRITICAL = 0.9
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "ml_models", "threat_model.pkl")
 SCALER_PATH = os.path.join(os.path.dirname(__file__), "..", "ml_models", "scaler.pkl")
+ 

@@ -205,3 +205,4 @@ async def lock_user(db, user_id, triggered_by_id, ws_manager=None):
         })
 
     return {"locked": True, "user_id": user_id, "alert_id": alert.id}
+ 

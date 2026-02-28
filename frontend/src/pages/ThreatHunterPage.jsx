@@ -12,6 +12,8 @@ export default function ThreatHunterPage() {
     const [scanStatus, setScanStatus] = useState('')
     const [scanning, setScanning] = useState(false)
     const [lastTranscript, setLastTranscript] = useState('')
+    const [severityFilter, setSeverityFilter] = useState('')
+    const [typeFilter, setTypeFilter] = useState('')
 
     useEffect(() => {
         api.get('/alerts/').then((r) => setAlerts(r.data)).catch(() => { })
@@ -70,6 +72,12 @@ export default function ThreatHunterPage() {
         }
     }
 
+    const filteredAlerts = alerts.filter((a) => {
+        const matchSeverity = !severityFilter || a.severity === severityFilter
+        const matchType = !typeFilter || a.alert_type === typeFilter
+        return matchSeverity && matchType
+    })
+
     return (
         <div className="min-h-screen bg-surface-900">
             <Navbar />
@@ -122,15 +130,38 @@ export default function ThreatHunterPage() {
                 </div>
 
                 <div>
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                         <h2 className="text-lg font-semibold text-white">
                             Active Alerts
-                            {alerts.length > 0 && (
+                            {filteredAlerts.length > 0 && (
                                 <span className="ml-2 bg-red-500/20 text-red-400 text-sm font-bold px-2 py-0.5 rounded-full">
-                                    {alerts.length}
+                                    {filteredAlerts.length}
                                 </span>
                             )}
                         </h2>
+                        <div className="flex items-center gap-3">
+                            <select
+                                className="input-dark text-xs py-1.5 w-32"
+                                value={severityFilter}
+                                onChange={(e) => setSeverityFilter(e.target.value)}
+                            >
+                                <option value="">All Severities</option>
+                                <option value="critical">Critical</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                            <select
+                                className="input-dark text-xs py-1.5 w-40"
+                                value={typeFilter}
+                                onChange={(e) => setTypeFilter(e.target.value)}
+                            >
+                                <option value="">All Types</option>
+                                <option value="anomaly_detected">Anomaly Detected</option>
+                                <option value="manual_lock">Manual Lock</option>
+                                <option value="policy_violation">Policy Violation</option>
+                            </select>
+                        </div>
                     </div>
                     {alerts.length === 0 ? (
                         <div className="card text-center text-slate-500 py-10">
@@ -138,9 +169,14 @@ export default function ThreatHunterPage() {
                             <p>No active threats detected</p>
                             <p className="text-xs mt-1">Run a scan or wait for live detection</p>
                         </div>
+                    ) : filteredAlerts.length === 0 ? (
+                        <div className="card text-center text-slate-500 py-10">
+                            <p className="text-3xl mb-2">🔍</p>
+                            <p>No threats match your filters</p>
+                        </div>
                     ) : (
                         <div className="flex flex-col gap-3">
-                            {alerts.map((a) => (
+                            {filteredAlerts.map((a) => (
                                 <ThreatCard key={a.id} alert={a} onResolve={handleResolve} />
                             ))}
                         </div>

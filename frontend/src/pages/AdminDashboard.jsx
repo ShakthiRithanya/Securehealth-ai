@@ -14,6 +14,8 @@ export default function AdminDashboard() {
     const [todayLogs, setTodayLogs] = useState(0)
     const [loading, setLoading] = useState(true)
     const [activityFeed, setActivityFeed] = useState([])
+    const [alertSeverityFilter, setAlertSeverityFilter] = useState('')
+    const [activityActionFilter, setActivityActionFilter] = useState('')
 
     useEffect(() => {
         const load = async () => {
@@ -70,6 +72,16 @@ export default function AdminDashboard() {
     const admins = users.filter((u) => u.role === 'admin').length
     const doctors = users.filter((u) => u.role === 'doctor').length
 
+    const filteredAlerts = alerts.filter((a) => {
+        if (!alertSeverityFilter) return true
+        return a.severity === alertSeverityFilter
+    })
+
+    const filteredActivity = activityFeed.filter((a) => {
+        if (!activityActionFilter) return true
+        return a.action === activityActionFilter
+    })
+
     return (
         <div className="min-h-screen bg-surface-900">
             <Navbar />
@@ -100,29 +112,42 @@ export default function AdminDashboard() {
 
                     {/* Security Alerts */}
                     <div className="flex flex-col gap-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
                             <h2 className="text-lg font-semibold text-white">
                                 Security Alerts
-                                {alerts.length > 0 && (
+                                {filteredAlerts.length > 0 && (
                                     <span className="ml-2 bg-red-500/20 text-red-400 text-sm font-bold px-2 py-0.5 rounded-full">
-                                        {alerts.length}
+                                        {filteredAlerts.length}
                                     </span>
                                 )}
                             </h2>
-                            <a href="/admin/threat-hunter" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium">
-                                View Threat Hunter →
-                            </a>
+                            <div className="flex items-center gap-3">
+                                <select
+                                    className="input-dark text-xs py-1"
+                                    value={alertSeverityFilter}
+                                    onChange={(e) => setAlertSeverityFilter(e.target.value)}
+                                >
+                                    <option value="">All Severities</option>
+                                    <option value="critical">Critical</option>
+                                    <option value="high">High</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="low">Low</option>
+                                </select>
+                                <a href="/admin/threat-hunter" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium">
+                                    View full →
+                                </a>
+                            </div>
                         </div>
                         {loading ? (
                             <p className="text-slate-500 text-sm">Loading…</p>
-                        ) : alerts.length === 0 ? (
+                        ) : filteredAlerts.length === 0 ? (
                             <div className="card text-center text-slate-500 py-8">
                                 <p className="text-2xl mb-2">✅</p>
-                                <p>No open alerts — system is healthy</p>
+                                <p>No alerts matching criteria</p>
                             </div>
                         ) : (
                             <div className="flex flex-col gap-3 max-h-96 overflow-y-auto pr-1">
-                                {alerts.slice(0, 8).map((a) => (
+                                {filteredAlerts.slice(0, 8).map((a) => (
                                     <ThreatCard key={a.id} alert={a} onResolve={handleResolve} />
                                 ))}
                             </div>
@@ -130,15 +155,30 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Live Patient Activity */}
-                    <div className="card">
+                    <div className="card flex flex-col gap-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <h2 className="text-slate-300 font-semibold text-sm">Activity Filter</h2>
+                            <select
+                                className="input-dark text-xs py-1"
+                                value={activityActionFilter}
+                                onChange={(e) => setActivityActionFilter(e.target.value)}
+                            >
+                                <option value="">All Actions</option>
+                                <option value="VIEW">VIEW</option>
+                                <option value="EDIT">EDIT</option>
+                                <option value="EXPORT">EXPORT</option>
+                                <option value="LOGIN">LOGIN</option>
+                                <option value="LOGOUT">LOGOUT</option>
+                            </select>
+                        </div>
                         <ActivityFeed
-                            events={activityFeed}
+                            events={filteredActivity}
                             title="Patient Data Activity"
                             maxItems={15}
                         />
-                        {activityFeed.length === 0 && !loading && (
+                        {filteredActivity.length === 0 && !loading && (
                             <p className="text-xs text-slate-600 mt-4 text-center">
-                                Actions by doctors and nurses on patient records will appear here in real-time
+                                No activity matching criteria
                             </p>
                         )}
                     </div>

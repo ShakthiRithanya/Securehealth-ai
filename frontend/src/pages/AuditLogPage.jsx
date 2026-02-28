@@ -33,6 +33,8 @@ export default function AuditLogPage() {
     const [fromDt, setFromDt] = useState('')
     const [toDt, setToDt] = useState('')
     const [limit, setLimit] = useState('100')
+    const [resourceFilter, setResourceFilter] = useState('')
+    const [ipFilter, setIpFilter] = useState('')
 
     const fetchLogs = async () => {
         setLoading(true)
@@ -54,6 +56,12 @@ export default function AuditLogPage() {
     }
 
     useEffect(() => { fetchLogs() }, [userId, action, flaggedOnly, fromDt, toDt, limit])
+
+    const filteredLogs = logs.filter((l) => {
+        const matchResource = !resourceFilter || (l.resource || '').toLowerCase().includes(resourceFilter.toLowerCase())
+        const matchIp = !ipFilter || (l.ip_address || '').toLowerCase().includes(ipFilter.toLowerCase())
+        return matchResource && matchIp
+    })
 
     return (
         <div className="min-h-screen bg-surface-900">
@@ -120,29 +128,46 @@ export default function AuditLogPage() {
                         />
                         <span className="text-slate-300 text-sm">Flagged only</span>
                     </label>
-                    <div>
-                        <label className="block text-slate-400 text-xs font-semibold mb-1">Show</label>
-                        <select
-                            className="input-dark w-24"
-                            value={limit}
-                            onChange={(e) => setLimit(e.target.value)}
-                        >
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                            <option value="200">200</option>
-                            <option value="500">500</option>
-                        </select>
+                    <div className="flex items-center gap-4 border-t border-slate-700/50 pt-4 mt-2 w-full">
+                        <div>
+                            <label className="block text-slate-400 text-xs font-semibold mb-1">Resource</label>
+                            <input
+                                className="input-dark w-40"
+                                placeholder="e.g. patient_record"
+                                value={resourceFilter}
+                                onChange={(e) => setResourceFilter(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-slate-400 text-xs font-semibold mb-1">IP Address</label>
+                            <input
+                                className="input-dark w-40"
+                                placeholder="127.0.0.1"
+                                value={ipFilter}
+                                onChange={(e) => setIpFilter(e.target.value)}
+                            />
+                        </div>
+                        <div className="ml-auto flex items-center gap-2">
+                            <label className="text-slate-400 text-xs font-semibold">Show</label>
+                            <select
+                                className="input-dark w-24"
+                                value={limit}
+                                onChange={(e) => setLimit(e.target.value)}
+                            >
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                                <option value="200">200</option>
+                                <option value="500">500</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <div>
-                    {loading ? (
-                        <p className="text-slate-500 text-sm">Loading logs…</p>
-                    ) : (
-                        <p className="text-slate-500 text-xs mb-3">{logs.length} records</p>
-                    )}
-                    <LogTable logs={logs} />
-                </div>
+                {loading ? (
+                    <div className="text-center py-12 text-slate-500">Loading query results…</div>
+                ) : (
+                    <LogTable logs={filteredLogs} />
+                )}
             </div>
         </div>
     )

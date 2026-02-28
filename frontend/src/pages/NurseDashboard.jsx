@@ -26,6 +26,10 @@ export default function NurseDashboard() {
     const [selectedId, setSelectedId] = useState(null)
     const [search, setSearch] = useState('')
     const [wardFilter, setWardFilter] = useState('')
+    const [stateFilter, setStateFilter] = useState('')
+    const [ageFilter, setAgeFilter] = useState('')
+    const [riskFilter, setRiskFilter] = useState('')
+    const [schemeFilter, setSchemeFilter] = useState('')
     const [activityFeed, setActivityFeed] = useState([])
 
     const load = async () => {
@@ -53,11 +57,28 @@ export default function NurseDashboard() {
     const { connected } = useWebSocket(WS_URL, handleWsMessage)
 
     const wards = [...new Set(patients.map((p) => p.ward))].sort()
+    const states = [...new Set(patients.map((p) => p.state))].filter(Boolean).sort()
 
     const filtered = patients.filter((p) => {
         const matchName = !search || p.name.toLowerCase().includes(search.toLowerCase())
         const matchWard = !wardFilter || p.ward === wardFilter
-        return matchName && matchWard
+        const matchState = !stateFilter || p.state === stateFilter
+
+        let matchAge = true
+        if (ageFilter === '<30') matchAge = p.age < 30
+        if (ageFilter === '30-50') matchAge = p.age >= 30 && p.age <= 50
+        if (ageFilter === '>50') matchAge = p.age > 50
+
+        let matchRisk = true
+        if (riskFilter === 'High') matchRisk = p.risk_score >= 0.65
+        if (riskFilter === 'Medium') matchRisk = p.risk_score >= 0.35 && p.risk_score < 0.65
+        if (riskFilter === 'Low') matchRisk = p.risk_score < 0.35
+
+        let matchScheme = true
+        if (schemeFilter === 'Eligible') matchScheme = p.scheme_eligible?.length > 0
+        if (schemeFilter === 'Not Eligible') matchScheme = !p.scheme_eligible || p.scheme_eligible.length === 0
+
+        return matchName && matchWard && matchState && matchAge && matchRisk && matchScheme
     })
 
     const highRisk = patients.filter((p) => p.risk_score >= 0.65).length
@@ -102,21 +123,46 @@ export default function NurseDashboard() {
                 <div className="grid lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 flex flex-col gap-4">
                         {/* Filters — ward dropdown scoped to nurse's 2 wards */}
-                        <div className="flex flex-wrap gap-3 items-center">
-                            <h2 className="text-lg font-semibold text-white flex-1">Patients in Your Wards</h2>
+                        <div className="flex flex-wrap gap-3 items-center bg-slate-800/50 p-3 rounded-xl border border-slate-700">
+                            <h2 className="text-lg font-semibold text-white mr-auto">Patients in Your Wards</h2>
                             <input
-                                className="input-dark w-44 text-sm"
+                                className="input-dark w-40 text-sm"
                                 placeholder="Search by name…"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
                             <select
-                                className="input-dark text-sm"
+                                className="input-dark text-sm w-32"
                                 value={wardFilter}
                                 onChange={(e) => setWardFilter(e.target.value)}
                             >
                                 <option value="">All My Wards</option>
                                 {assignedWards.map((w) => <option key={w} value={w}>{w}</option>)}
+                            </select>
+                            <select
+                                className="input-dark text-sm w-32"
+                                value={stateFilter}
+                                onChange={(e) => setStateFilter(e.target.value)}
+                            >
+                                <option value="">All States</option>
+                                {states.map((s) => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                            <select className="input-dark text-sm w-28" value={ageFilter} onChange={(e) => setAgeFilter(e.target.value)}>
+                                <option value="">All Ages</option>
+                                <option value="<30">Under 30</option>
+                                <option value="30-50">30 - 50</option>
+                                <option value=">50">Over 50</option>
+                            </select>
+                            <select className="input-dark text-sm w-28" value={riskFilter} onChange={(e) => setRiskFilter(e.target.value)}>
+                                <option value="">All Risks</option>
+                                <option value="High">High Risk</option>
+                                <option value="Medium">Medium Risk</option>
+                                <option value="Low">Low Risk</option>
+                            </select>
+                            <select className="input-dark text-sm w-36" value={schemeFilter} onChange={(e) => setSchemeFilter(e.target.value)}>
+                                <option value="">All Schemes</option>
+                                <option value="Eligible">Eligible Schemes</option>
+                                <option value="Not Eligible">Not Eligible</option>
                             </select>
                         </div>
 

@@ -67,6 +67,7 @@ async def _log_action(request: Request, db: Session, user: User, patient: Patien
         "user_role": user.role,
         "patient_id": patient.id,
         "patient_name": patient.name,
+        "patient_ward": patient.ward,
         "action": action,
         "resource": resource,
         "timestamp": lg.timestamp.isoformat(),
@@ -76,7 +77,12 @@ async def _log_action(request: Request, db: Session, user: User, patient: Patien
 
 @router.get("/risk-summary")
 def risk_summary(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    patients = db.query(Patient).all()
+    q = db.query(Patient)
+    if user.role == "nurse":
+        wards = [w.strip() for w in (user.department or "").split(",") if w.strip()]
+        if wards:
+            q = q.filter(Patient.ward.in_(wards))
+    patients = q.all()
     if not patients:
         return {"total": 0, "avg_risk": 0, "buckets": {}, "scheme_counts": {}}
 

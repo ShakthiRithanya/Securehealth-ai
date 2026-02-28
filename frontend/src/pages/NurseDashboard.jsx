@@ -43,9 +43,12 @@ export default function NurseDashboard() {
 
     const handleWsMessage = useCallback((msg) => {
         if (msg.event === 'patient_action') {
-            setActivityFeed((prev) => [msg, ...prev].slice(0, 50))
+            // Only show events for this nurse's assigned wards
+            if (assignedWards.length === 0 || assignedWards.includes(msg.patient_ward)) {
+                setActivityFeed((prev) => [msg, ...prev].slice(0, 50))
+            }
         }
-    }, [])
+    }, [assignedWards])
 
     const { connected } = useWebSocket(WS_URL, handleWsMessage)
 
@@ -58,6 +61,7 @@ export default function NurseDashboard() {
     })
 
     const highRisk = patients.filter((p) => p.risk_score >= 0.65).length
+    const schemeEligible = patients.filter((p) => p.scheme_eligible?.length > 0).length
 
     return (
         <div className="min-h-screen bg-surface-900">
@@ -90,7 +94,7 @@ export default function NurseDashboard() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <StatWidget label="Total Patients" value={loading ? '…' : patients.length} accentColor="text-teal-400" />
                     <StatWidget label="High Risk" value={loading ? '…' : highRisk} accentColor="text-red-400" caption="score ≥ 0.65" />
-                    <StatWidget label="Wards" value={loading ? '…' : wards.length} accentColor="text-indigo-400" />
+                    <StatWidget label="Scheme Eligible" value={loading ? '…' : schemeEligible} accentColor="text-indigo-400" />
                     <StatWidget label="Live Events" value={activityFeed.length} accentColor="text-emerald-400" />
                 </div>
 

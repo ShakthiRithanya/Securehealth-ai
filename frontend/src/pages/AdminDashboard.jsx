@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import Navbar from '../components/Navbar'
 import StatWidget from '../components/StatWidget'
 import ThreatCard from '../components/ThreatCard'
+import ActivityFeed from '../components/ActivityFeed'
 import api from '../api/client'
 import useWebSocket from '../hooks/useWebSocket'
 
@@ -12,6 +13,7 @@ export default function AdminDashboard() {
     const [alerts, setAlerts] = useState([])
     const [todayLogs, setTodayLogs] = useState(0)
     const [loading, setLoading] = useState(true)
+    const [activityFeed, setActivityFeed] = useState([])
 
     useEffect(() => {
         const load = async () => {
@@ -48,6 +50,10 @@ export default function AdminDashboard() {
             }
             setAlerts((prev) => [synthetic, ...prev])
         }
+        if (msg.event === 'patient_action') {
+            setActivityFeed((prev) => [msg, ...prev].slice(0, 50))
+            setTodayLogs((n) => n + 1)
+        }
     }, [])
 
     const { connected } = useWebSocket(WS_URL, handleWsMessage)
@@ -63,12 +69,13 @@ export default function AdminDashboard() {
 
     const admins = users.filter((u) => u.role === 'admin').length
     const doctors = users.filter((u) => u.role === 'doctor').length
-    const nurses = users.filter((u) => u.role === 'nurse').length
 
     return (
         <div className="min-h-screen bg-surface-900">
             <Navbar />
-            <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col gap-8">
+            <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col gap-8">
+
+                {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
@@ -80,6 +87,7 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
+                {/* Stats */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <StatWidget label="Total Staff" value={users.length} accentColor="text-indigo-400" caption={`${admins} admins`} />
                     <StatWidget label="Doctors" value={doctors} accentColor="text-blue-400" />
@@ -87,28 +95,55 @@ export default function AdminDashboard() {
                     <StatWidget label="Logs Today" value={todayLogs} accentColor="text-amber-400" />
                 </div>
 
-                <div>
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-white">Recent Alerts</h2>
-                        <a href="/admin/threat-hunter" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium">
-                            View Threat Hunter →
-                        </a>
+                {/* Twin panels */}
+                <div className="grid lg:grid-cols-2 gap-6">
+
+                    {/* Security Alerts */}
+                    <div className="flex flex-col gap-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-white">
+                                Security Alerts
+                                {alerts.length > 0 && (
+                                    <span className="ml-2 bg-red-500/20 text-red-400 text-sm font-bold px-2 py-0.5 rounded-full">
+                                        {alerts.length}
+                                    </span>
+                                )}
+                            </h2>
+                            <a href="/admin/threat-hunter" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium">
+                                View Threat Hunter →
+                            </a>
+                        </div>
+                        {loading ? (
+                            <p className="text-slate-500 text-sm">Loading…</p>
+                        ) : alerts.length === 0 ? (
+                            <div className="card text-center text-slate-500 py-8">
+                                <p className="text-2xl mb-2">✅</p>
+                                <p>No open alerts — system is healthy</p>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col gap-3 max-h-96 overflow-y-auto pr-1">
+                                {alerts.slice(0, 8).map((a) => (
+                                    <ThreatCard key={a.id} alert={a} onResolve={handleResolve} />
+                                ))}
+                            </div>
+                        )}
                     </div>
-                    {loading ? (
-                        <p className="text-slate-500 text-sm">Loading…</p>
-                    ) : alerts.length === 0 ? (
-                        <div className="card text-center text-slate-500 py-8">
-                            <p className="text-2xl mb-2">✅</p>
-                            <p>No open alerts — system is healthy</p>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col gap-3">
-                            {alerts.slice(0, 8).map((a) => (
-                                <ThreatCard key={a.id} alert={a} onResolve={handleResolve} />
-                            ))}
-                        </div>
-                    )}
+
+                    {/* Live Patient Activity */}
+                    <div className="card">
+                        <ActivityFeed
+                            events={activityFeed}
+                            title="Patient Data Activity"
+                            maxItems={15}
+                        />
+                        {activityFeed.length === 0 && !loading && (
+                            <p className="text-xs text-slate-600 mt-4 text-center">
+                                Actions by doctors and nurses on patient records will appear here in real-time
+                            </p>
+                        )}
+                    </div>
                 </div>
+
             </div>
         </div>
     )

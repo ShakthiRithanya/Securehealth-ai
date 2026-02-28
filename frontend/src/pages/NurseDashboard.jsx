@@ -1,7 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import Navbar from '../components/Navbar'
 import StatWidget from '../components/StatWidget'
+import PatientModal from '../components/PatientModal'
+import ActivityFeed from '../components/ActivityFeed'
 import api from '../api/client'
+import useWebSocket from '../hooks/useWebSocket'
+
+const WS_URL = `ws://${window.location.host}/ws/alerts`
 
 const riskBadge = (score) => {
     if (score >= 0.65) return 'badge-high'
@@ -9,118 +14,148 @@ const riskBadge = (score) => {
     return 'badge-low'
 }
 
-function fmtDt(v) {
-    if (!v) return '—'
-    return new Date(v).toLocaleString('en-IN', {
-        day: '2-digit', month: 'short',
-        hour: '2-digit', minute: '2-digit',
-    })
-}
-
 export default function NurseDashboard() {
     const [patients, setPatients] = useState([])
-    const [logs, setLogs] = useState([])
     const [loading, setLoading] = useState(true)
+    const [selectedId, setSelectedId] = useState(null)
+    const [search, setSearch] = useState('')
+    const [wardFilter, setWardFilter] = useState('')
+    const [activityFeed, setActivityFeed] = useState([])
 
-    useEffect(() => {
-        const load = async () => {
-            try {
-                const [pr, lr] = await Promise.all([
-                    api.get('/patients/'),
-                    api.get('/logs/my?limit=20'),
-                ])
-                setPatients(pr.data)
-                setLogs(lr.data)
-            } catch {
-                // silently degrade
-            } finally {
-                setLoading(false)
-            }
+    const load = async () => {
+        try {
+            const { data } = await api.get('/patients/')
+            setPatients(data)
+        } catch {
+            // silently degrade
+        } finally {
+            setLoading(false)
         }
-        load()
+    }
+
+    useEffect(() => { load() }, [])
+
+    const handleWsMessage = useCallback((msg) => {
+        if (msg.event === 'patient_action') {
+            setActivityFeed((prev) => [msg, ...prev].slice(0, 50))
+        }
     }, [])
+
+    const { connected } = useWebSocket(WS_URL, handleWsMessage)
+
+    const wards = [...new Set(patients.map((p) => p.ward))].sort()
+
+    const filtered = patients.filter((p) => {
+        const matchName = !search || p.name.toLowerCase().includes(search.toLowerCase())
+        const matchWard = !wardFilter || p.ward === wardFilter
+        return matchName && matchWard
+    })
 
     const highRisk = patients.filter((p) => p.risk_score >= 0.65).length
 
     return (
         <div className="min-h-screen bg-surface-900">
             <Navbar />
-            <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col gap-8">
-                <div>
-                    <h1 className="text-2xl font-bold text-white">Ward Dashboard</h1>
-                    <p className="text-slate-400 text-sm mt-1">Your ward patients & recent activity</p>
-                </div>
+            <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col gap-8">
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <StatWidget label="Ward Patients" value={loading ? '…' : patients.length} accentColor="text-teal-400" />
-                    <StatWidget label="High Risk" value={loading ? '…' : highRisk} accentColor="text-red-400" caption="score ≥ 0.65" />
-                    <StatWidget label="Recent Actions" value={loading ? '…' : logs.length} accentColor="text-slate-400" />
-                </div>
-
-                <div>
-                    <h2 className="text-lg font-semibold text-white mb-4">Ward Patients</h2>
-                    <div className="overflow-x-auto rounded-xl border border-slate-700">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="border-b border-slate-700 bg-slate-800/60">
-                                    <th className="text-left px-4 py-3 text-slate-400 font-semibold text-xs uppercase tracking-wider">Name</th>
-                                    <th className="text-left px-4 py-3 text-slate-400 font-semibold text-xs uppercase tracking-wider">Ward</th>
-                                    <th className="text-left px-4 py-3 text-slate-400 font-semibold text-xs uppercase tracking-wider">Age</th>
-                                    <th className="text-left px-4 py-3 text-slate-400 font-semibold text-xs uppercase tracking-wider">Risk</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {patients.map((p) => (
-                                    <tr key={p.id} className="border-b border-slate-700/40 hover:bg-slate-700/20 transition-colors">
-                                        <td className="px-4 py-3 text-slate-200 font-medium">{p.name}</td>
-                                        <td className="px-4 py-3 text-slate-400">{p.ward}</td>
-                                        <td className="px-4 py-3 text-slate-400">{p.age}</td>
-                                        <td className="px-4 py-3">
-                                            <span className={riskBadge(p.risk_score)}>{p.risk_score?.toFixed(2)}</span>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {!loading && patients.length === 0 && (
-                                    <tr><td colSpan={4} className="text-center py-8 text-slate-500">No patients in your ward</td></tr>
-                                )}
-                            </tbody>
-                        </table>
+                {/* Header */}
+                <div className="flex items-start justify-between flex-wrap gap-3">
+                    <div>
+                        <h1 className="text-2xl font-bold text-white">Ward Dashboard</h1>
+                        <p className="text-slate-400 text-sm mt-1">View, export or update patient records · All actions are logged</p>
                     </div>
+                    <span className={`flex items-center gap-1.5 text-xs ${connected ? 'text-emerald-400' : 'text-slate-500'}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+                        {connected ? 'Live feed active' : 'Reconnecting…'}
+                    </span>
                 </div>
 
-                <div>
-                    <h2 className="text-lg font-semibold text-white mb-4">My Recent Activity</h2>
-                    {logs.length === 0 ? (
-                        <p className="text-slate-500 text-sm">No recent activity</p>
-                    ) : (
+                {/* Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <StatWidget label="Total Patients" value={loading ? '…' : patients.length} accentColor="text-teal-400" />
+                    <StatWidget label="High Risk" value={loading ? '…' : highRisk} accentColor="text-red-400" caption="score ≥ 0.65" />
+                    <StatWidget label="Wards" value={loading ? '…' : wards.length} accentColor="text-indigo-400" />
+                    <StatWidget label="Live Events" value={activityFeed.length} accentColor="text-emerald-400" />
+                </div>
+
+                {/* Patient Table + Activity Feed */}
+                <div className="grid lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 flex flex-col gap-4">
+                        {/* Filters */}
+                        <div className="flex flex-wrap gap-3 items-center">
+                            <h2 className="text-lg font-semibold text-white flex-1">All Patients</h2>
+                            <input
+                                className="input-dark w-44 text-sm"
+                                placeholder="Search by name…"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
+                            <select
+                                className="input-dark text-sm"
+                                value={wardFilter}
+                                onChange={(e) => setWardFilter(e.target.value)}
+                            >
+                                <option value="">All Wards</option>
+                                {wards.map((w) => <option key={w} value={w}>{w}</option>)}
+                            </select>
+                        </div>
+
                         <div className="overflow-x-auto rounded-xl border border-slate-700">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b border-slate-700 bg-slate-800/60">
-                                        <th className="text-left px-4 py-3 text-slate-400 font-semibold text-xs uppercase tracking-wider">Time</th>
-                                        <th className="text-left px-4 py-3 text-slate-400 font-semibold text-xs uppercase tracking-wider">Action</th>
-                                        <th className="text-left px-4 py-3 text-slate-400 font-semibold text-xs uppercase tracking-wider">Resource</th>
+                                        <th className="text-left px-4 py-3 text-slate-400 font-semibold text-xs uppercase tracking-wider">Name</th>
+                                        <th className="text-left px-4 py-3 text-slate-400 font-semibold text-xs uppercase tracking-wider">Age</th>
+                                        <th className="text-left px-4 py-3 text-slate-400 font-semibold text-xs uppercase tracking-wider">Ward</th>
+                                        <th className="text-left px-4 py-3 text-slate-400 font-semibold text-xs uppercase tracking-wider">Risk</th>
+                                        <th className="text-left px-4 py-3 text-slate-400 font-semibold text-xs uppercase tracking-wider"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {logs.map((l, i) => (
-                                        <tr key={l.id || i} className="border-b border-slate-700/40">
-                                            <td className="px-4 py-2.5 text-slate-400 text-xs">{fmtDt(l.timestamp)}</td>
-                                            <td className="px-4 py-2.5">
-                                                <span className={`text-xs font-semibold px-2 py-0.5 rounded ${l.action === 'EXPORT' ? 'bg-red-500/20 text-red-400' :
-                                                        l.action === 'EDIT' ? 'bg-amber-500/20 text-amber-400' :
-                                                            'bg-slate-600/40 text-slate-300'
-                                                    }`}>{l.action}</span>
+                                    {filtered.map((p) => (
+                                        <tr
+                                            key={p.id}
+                                            className="border-b border-slate-700/40 hover:bg-slate-700/20 transition-colors cursor-pointer"
+                                            onClick={() => setSelectedId(p.id)}
+                                        >
+                                            <td className="px-4 py-3 text-slate-200 font-medium">{p.name}</td>
+                                            <td className="px-4 py-3 text-slate-400">{p.age}</td>
+                                            <td className="px-4 py-3 text-slate-400">{p.ward}</td>
+                                            <td className="px-4 py-3">
+                                                <span className={riskBadge(p.risk_score)}>{p.risk_score?.toFixed(2)}</span>
                                             </td>
-                                            <td className="px-4 py-2.5 text-slate-400 text-xs">{l.resource}</td>
+                                            <td className="px-4 py-3">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setSelectedId(p.id) }}
+                                                    className="text-xs bg-teal-600/20 hover:bg-teal-600/40 text-teal-400 px-2.5 py-1 rounded-lg transition-colors"
+                                                >
+                                                    Open →
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))}
+                                    {!loading && filtered.length === 0 && (
+                                        <tr><td colSpan={5} className="text-center py-8 text-slate-500">No patients found</td></tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
-                    )}
+                    </div>
+
+                    {/* Live Activity Feed */}
+                    <div className="card">
+                        <ActivityFeed events={activityFeed} title="Live Activity" maxItems={12} />
+                    </div>
                 </div>
             </div>
+
+            {/* Patient Modal */}
+            {selectedId && (
+                <PatientModal
+                    patientId={selectedId}
+                    onClose={() => setSelectedId(null)}
+                />
+            )}
         </div>
     )
 }

@@ -1,10 +1,11 @@
 import json
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from backend.database import get_db
-from backend.models import Patient, User
+from backend.models import Patient, User, AccessLog
 from backend.deps import get_current_user, require_admin
 
 router = APIRouter()
@@ -20,6 +21,13 @@ class PatientCreate(BaseModel):
     state: Optional[str] = None
 
 
+class PatientEdit(BaseModel):
+    age: Optional[int] = None
+    ward: Optional[str] = None
+    risk_score: Optional[float] = None
+    state: Optional[str] = None
+
+
 def fmt(p: Patient):
     return {
         "id": p.id,
@@ -27,6 +35,7 @@ def fmt(p: Patient):
         "age": p.age,
         "ward": p.ward,
         "assigned_doctor_id": p.assigned_doctor_id,
+        "assigned_doctor": p.doctor.name if p.doctor else None,
         "scheme_eligible": json.loads(p.scheme_eligible) if p.scheme_eligible else [],
         "risk_score": p.risk_score,
         "state": p.state,
@@ -34,19 +43,40 @@ def fmt(p: Patient):
     }
 
 
-def scoped_query(db, user):
-    q = db.query(Patient)
-    if user.role == "doctor":
-        q = q.filter(Patient.assigned_doctor_id == user.id)
-    elif user.role == "nurse":
-        if user.department:
-            q = q.filter(Patient.ward == user.department)
-    return q
+async def _log_action(request: Request, db: Session, user: User, patient: Patient, action: str, resource: str):
+    lg = AccessLog(
+        user_id=user.id,
+        patient_id=patient.id,
+        action=action,
+        resource=resource,
+        ip_address=request.client.host if request.client else "unknown",
+        timestamp=datetime.utcnow(),
+        anomaly_score=0.0,
+        flagged=0,
+    )
+    db.add(lg)
+    db.commit()
+    db.refresh(lg)
+
+    ws_manager = request.app.state.ws_manager
+    await ws_manager.broadcast({
+        "event": "patient_action",
+        "log_id": lg.id,
+        "user_id": user.id,
+        "user_name": user.name,
+        "user_role": user.role,
+        "patient_id": patient.id,
+        "patient_name": patient.name,
+        "action": action,
+        "resource": resource,
+        "timestamp": lg.timestamp.isoformat(),
+    })
+    return lg
 
 
 @router.get("/risk-summary")
 def risk_summary(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    patients = scoped_query(db, user).all()
+    patients = db.query(Patient).all()
     if not patients:
         return {"total": 0, "avg_risk": 0, "buckets": {}, "scheme_counts": {}}
 
@@ -81,15 +111,70 @@ def risk_summary(db: Session = Depends(get_db), user: User = Depends(get_current
 
 
 @router.get("/")
-def list_patients(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    return [fmt(p) for p in scoped_query(db, user).all()]
+def list_patients(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+    ward: Optional[str] = None,
+    search: Optional[str] = None,
+):
+    q = db.query(Patient)
+    if ward:
+        q = q.filter(Patient.ward.ilike(f"%{ward}%"))
+    if search:
+        q = q.filter(Patient.name.ilike(f"%{search}%"))
+    return [fmt(p) for p in q.order_by(Patient.name).all()]
 
 
 @router.get("/{pid}")
-def get_patient(pid: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    p = scoped_query(db, user).filter(Patient.id == pid).first()
+async def get_patient(
+    pid: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    p = db.query(Patient).filter(Patient.id == pid).first()
     if not p:
         raise HTTPException(status_code=404, detail="patient not found")
+    await _log_action(request, db, user, p, "VIEW", "patient_record")
+    return fmt(p)
+
+
+@router.post("/{pid}/export")
+async def export_patient(
+    pid: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    p = db.query(Patient).filter(Patient.id == pid).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="patient not found")
+    await _log_action(request, db, user, p, "EXPORT", "patient_record")
+    return fmt(p)
+
+
+@router.patch("/{pid}")
+async def edit_patient(
+    pid: int,
+    body: PatientEdit,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    p = db.query(Patient).filter(Patient.id == pid).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="patient not found")
+    if body.age is not None:
+        p.age = body.age
+    if body.ward is not None:
+        p.ward = body.ward
+    if body.risk_score is not None:
+        p.risk_score = body.risk_score
+    if body.state is not None:
+        p.state = body.state
+    db.commit()
+    db.refresh(p)
+    await _log_action(request, db, user, p, "EDIT", "patient_record")
     return fmt(p)
 
 
@@ -111,4 +196,3 @@ def create_patient(body: PatientCreate, db: Session = Depends(get_db), _: User =
     db.commit()
     db.refresh(p)
     return fmt(p)
- 

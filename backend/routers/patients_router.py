@@ -26,6 +26,7 @@ class PatientEdit(BaseModel):
     ward: Optional[str] = None
     risk_score: Optional[float] = None
     state: Optional[str] = None
+    scheme_eligible: Optional[List[str]] = None
 
 
 def fmt(p: Patient):
@@ -188,8 +189,8 @@ async def edit_patient(
         raise HTTPException(status_code=403, detail="access restricted to your assigned wards")
     
     if user.role == "nurse":
-        if body.ward is not None or body.risk_score is not None:
-            raise HTTPException(status_code=403, detail="Nurses are not allowed to edit ward or risk score")
+        if body.ward is not None or body.risk_score is not None or body.scheme_eligible is not None:
+            raise HTTPException(status_code=403, detail="Nurses are not allowed to edit ward, risk score, or scheme eligibility")
 
     if body.age is not None:
         p.age = body.age
@@ -199,6 +200,8 @@ async def edit_patient(
         p.risk_score = body.risk_score
     if body.state is not None:
         p.state = body.state
+    if body.scheme_eligible is not None:
+        p.scheme_eligible = json.dumps(body.scheme_eligible)
     db.commit()
     db.refresh(p)
     await _log_action(request, db, user, p, "EDIT", "patient_record")

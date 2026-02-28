@@ -36,7 +36,13 @@ export default function PatientModal({ patientId, onClose }) {
             try {
                 const { data } = await api.get(`/patients/${patientId}`)
                 setPatient(data)
-                setEditForm({ age: data.age, ward: data.ward, state: data.state, risk_score: data.risk_score })
+                setEditForm({
+                    age: data.age,
+                    ward: data.ward,
+                    state: data.state,
+                    risk_score: data.risk_score,
+                    scheme_eligible: Array.isArray(data.scheme_eligible) ? data.scheme_eligible.join(', ') : ''
+                })
             } catch {
                 onClose()
             } finally {
@@ -68,7 +74,18 @@ export default function PatientModal({ patientId, onClose }) {
     const handleSave = async () => {
         setSaving(true)
         try {
-            const { data } = await api.patch(`/patients/${patientId}`, editForm)
+            const payload = {
+                ...editForm,
+                scheme_eligible: editForm.scheme_eligible
+                    ? editForm.scheme_eligible.split(',').map(s => s.trim()).filter(Boolean)
+                    : []
+            }
+            if (isNurse) {
+                delete payload.ward
+                delete payload.risk_score
+                delete payload.scheme_eligible
+            }
+            const { data } = await api.patch(`/patients/${patientId}`, payload)
             setPatient(data)
             setEditing(false)
             showToast('Patient record updated')
@@ -183,6 +200,18 @@ export default function PatientModal({ patientId, onClose }) {
                                             title={isNurse ? "Nurses cannot edit risk score" : ""}
                                         />
                                     </div>
+                                </div>
+                                <div>
+                                    <label className="block text-slate-400 text-xs mb-1">Scheme Eligibility (comma separated)</label>
+                                    <input
+                                        type="text"
+                                        className={`input-dark w-full ${isNurse ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        value={editForm.scheme_eligible || ''}
+                                        onChange={(e) => !isNurse && setEditForm({ ...editForm, scheme_eligible: e.target.value })}
+                                        disabled={isNurse}
+                                        title={isNurse ? "Nurses cannot edit scheme eligibility" : ""}
+                                        placeholder="e.g. PMJAY, State Health Card"
+                                    />
                                 </div>
                                 <button onClick={handleSave} disabled={saving} className="btn-primary py-2.5">
                                     {saving ? 'Saving…' : '✓ Save Changes'}

@@ -5,6 +5,7 @@ import PatientModal from '../components/PatientModal'
 import ActivityFeed from '../components/ActivityFeed'
 import api from '../api/client'
 import useWebSocket from '../hooks/useWebSocket'
+import { useAuth } from '../contexts/AuthContext'
 
 const WS_URL = `ws://${window.location.host}/ws/alerts`
 
@@ -15,6 +16,11 @@ const riskBadge = (score) => {
 }
 
 export default function NurseDashboard() {
+    const { user } = useAuth()
+    const assignedWards = user?.department
+        ? user.department.split(',').map((w) => w.trim()).filter(Boolean)
+        : []
+
     const [patients, setPatients] = useState([])
     const [loading, setLoading] = useState(true)
     const [selectedId, setSelectedId] = useState(null)
@@ -63,6 +69,16 @@ export default function NurseDashboard() {
                     <div>
                         <h1 className="text-2xl font-bold text-white">Ward Dashboard</h1>
                         <p className="text-slate-400 text-sm mt-1">View, export or update patient records · All actions are logged</p>
+                        {/* Assigned Wards badges */}
+                        <div className="flex items-center gap-2 mt-3">
+                            <span className="text-slate-500 text-xs uppercase tracking-wider font-semibold">Your wards:</span>
+                            {assignedWards.map((w) => (
+                                <span key={w} className="bg-teal-500/15 text-teal-400 border border-teal-500/25 text-xs font-semibold px-3 py-1 rounded-full">
+                                    🏥 {w}
+                                </span>
+                            ))}
+                            <span className="text-slate-600 text-xs ml-1">· Restricted access</span>
+                        </div>
                     </div>
                     <span className={`flex items-center gap-1.5 text-xs ${connected ? 'text-emerald-400' : 'text-slate-500'}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
@@ -81,9 +97,9 @@ export default function NurseDashboard() {
                 {/* Patient Table + Activity Feed */}
                 <div className="grid lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 flex flex-col gap-4">
-                        {/* Filters */}
+                        {/* Filters — ward dropdown scoped to nurse's 2 wards */}
                         <div className="flex flex-wrap gap-3 items-center">
-                            <h2 className="text-lg font-semibold text-white flex-1">All Patients</h2>
+                            <h2 className="text-lg font-semibold text-white flex-1">Patients in Your Wards</h2>
                             <input
                                 className="input-dark w-44 text-sm"
                                 placeholder="Search by name…"
@@ -95,8 +111,8 @@ export default function NurseDashboard() {
                                 value={wardFilter}
                                 onChange={(e) => setWardFilter(e.target.value)}
                             >
-                                <option value="">All Wards</option>
-                                {wards.map((w) => <option key={w} value={w}>{w}</option>)}
+                                <option value="">All My Wards</option>
+                                {assignedWards.map((w) => <option key={w} value={w}>{w}</option>)}
                             </select>
                         </div>
 

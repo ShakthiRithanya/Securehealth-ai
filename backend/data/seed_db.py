@@ -99,13 +99,14 @@ for i, name in enumerate(DOCTOR_NAMES):
 
 nurses = []
 for i, name in enumerate(NURSE_NAMES):
-    ward = WARDS[i % len(WARDS)]
+    ward1 = WARDS[i % len(WARDS)]
+    ward2 = WARDS[(i + 1) % len(WARDS)]
     u = User(
         name=name,
         email=f"nurse{i+1}@securehealth.in",
         password_hash=hash_password("Nurse@123"),
         role="nurse",
-        department=ward,
+        department=f"{ward1},{ward2}",
         is_locked=0,
     )
     db.add(u)

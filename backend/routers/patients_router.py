@@ -110,6 +110,12 @@ def risk_summary(db: Session = Depends(get_db), user: User = Depends(get_current
     }
 
 
+def nurse_wards(user: User):
+    if user.role == "nurse" and user.department:
+        return [w.strip() for w in user.department.split(",") if w.strip()]
+    return []
+
+
 @router.get("/")
 def list_patients(
     db: Session = Depends(get_db),
@@ -118,6 +124,10 @@ def list_patients(
     search: Optional[str] = None,
 ):
     q = db.query(Patient)
+    if user.role == "nurse":
+        wards = nurse_wards(user)
+        if wards:
+            q = q.filter(Patient.ward.in_(wards))
     if ward:
         q = q.filter(Patient.ward.ilike(f"%{ward}%"))
     if search:
@@ -135,6 +145,8 @@ async def get_patient(
     p = db.query(Patient).filter(Patient.id == pid).first()
     if not p:
         raise HTTPException(status_code=404, detail="patient not found")
+    if user.role == "nurse" and p.ward not in nurse_wards(user):
+        raise HTTPException(status_code=403, detail="access restricted to your assigned wards")
     await _log_action(request, db, user, p, "VIEW", "patient_record")
     return fmt(p)
 
@@ -149,6 +161,8 @@ async def export_patient(
     p = db.query(Patient).filter(Patient.id == pid).first()
     if not p:
         raise HTTPException(status_code=404, detail="patient not found")
+    if user.role == "nurse" and p.ward not in nurse_wards(user):
+        raise HTTPException(status_code=403, detail="access restricted to your assigned wards")
     await _log_action(request, db, user, p, "EXPORT", "patient_record")
     return fmt(p)
 
@@ -164,6 +178,8 @@ async def edit_patient(
     p = db.query(Patient).filter(Patient.id == pid).first()
     if not p:
         raise HTTPException(status_code=404, detail="patient not found")
+    if user.role == "nurse" and p.ward not in nurse_wards(user):
+        raise HTTPException(status_code=403, detail="access restricted to your assigned wards")
     if body.age is not None:
         p.age = body.age
     if body.ward is not None:

@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 JWT_SECRET = os.getenv("JWT_SECRET", "sh_jwt_s3cr3t_2024")
 JWT_ALGORITHM = "HS256"

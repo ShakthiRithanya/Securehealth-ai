@@ -11,6 +11,7 @@ def fmt(a: Alert):
     return {
         "id": a.id,
         "user_id": a.user_id,
+        "user_name": a.user.name if a.user else f"User #{a.user_id}",
         "alert_type": a.alert_type,
         "severity": a.severity,
         "details": a.details,

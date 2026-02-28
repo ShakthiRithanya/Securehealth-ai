@@ -109,6 +109,8 @@ async def scan(db, ward_filter=None, user_name_filter=None, triggered_by_id=None
     alerts_created = 0
     locked_count = 0
 
+    user_name_map = {u.id: u.name for u in all_users}
+
     for h in hits:
         score = h["anomaly_score"]
         if score < ANOMALY_MEDIUM:
@@ -116,9 +118,11 @@ async def scan(db, ward_filter=None, user_name_filter=None, triggered_by_id=None
 
         sev = _severity(score)
         auto_lock = 0
+        uid = h["user_id"]
+        uname = user_name_map.get(uid, f"User #{uid}")
 
         if score >= ANOMALY_CRITICAL:
-            target = db.query(User).filter(User.id == h["user_id"]).first()
+            target = db.query(User).filter(User.id == uid).first()
             if target and not target.is_locked:
                 target.is_locked = 1
                 auto_lock = 1
@@ -126,7 +130,7 @@ async def scan(db, ward_filter=None, user_name_filter=None, triggered_by_id=None
 
         atype = "rapid_access" if h.get("access_count", 0) > 10 else "anomaly_detected"
         alert = Alert(
-            user_id=h["user_id"],
+            user_id=uid,
             alert_type=atype,
             severity=sev,
             details=json.dumps(_safe_dict(h)),
@@ -141,7 +145,8 @@ async def scan(db, ward_filter=None, user_name_filter=None, triggered_by_id=None
             await ws_manager.broadcast({
                 "event": "new_alert",
                 "alert_id": alert.id,
-                "user_id": h["user_id"],
+                "user_id": uid,
+                "user_name": uname,
                 "severity": sev,
                 "anomaly_score": score,
                 "auto_locked": auto_lock,
@@ -175,6 +180,7 @@ async def lock_user(db, user_id, triggered_by_id, ws_manager=None):
         return {"message": "already locked", "user_id": user_id}
 
     target.is_locked = 1
+    uname = target.name
 
     alert = Alert(
         user_id=user_id,
@@ -190,8 +196,8 @@ async def lock_user(db, user_id, triggered_by_id, ws_manager=None):
     db.add(AgentCommand(
         issued_by=triggered_by_id,
         agent="threat_hunter",
-        command_text=f"lock user {user_id}",
-        result_summary=f"user {user_id} manually locked",
+        command_text=f"lock user {user_id} ({uname})",
+        result_summary=f"{uname} manually locked",
     ))
     db.commit()
 
@@ -199,10 +205,11 @@ async def lock_user(db, user_id, triggered_by_id, ws_manager=None):
         await ws_manager.broadcast({
             "event": "user_locked",
             "user_id": user_id,
+            "user_name": uname,
             "alert_id": alert.id,
             "severity": "high",
             "created_at": alert.created_at.isoformat(),
         })
 
-    return {"locked": True, "user_id": user_id, "alert_id": alert.id}
+    return {"locked": True, "user_id": user_id, "user_name": uname, "alert_id": alert.id}
  

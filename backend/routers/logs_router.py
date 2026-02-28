@@ -21,6 +21,7 @@ def fmt(lg: AccessLog):
     return {
         "id": lg.id,
         "user_id": lg.user_id,
+        "user_name": lg.user.name if lg.user else f"User #{lg.user_id}",
         "patient_id": lg.patient_id,
         "action": lg.action,
         "resource": lg.resource,

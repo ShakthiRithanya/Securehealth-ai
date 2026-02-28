@@ -41,7 +41,7 @@ export default function ThreatCard({ alert, onResolve }) {
                 </div>
 
                 <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-400">
-                    <span>User ID: <span className="text-slate-200 font-medium">{alert.user_id}</span></span>
+                    <span>User: <span className="text-slate-200 font-medium">{alert.user_name || `#${alert.user_id}`}</span></span>
                     <span>Alert ID: <span className="text-slate-200 font-medium">#{alert.id}</span></span>
                     <span>Time: <span className="text-slate-200">{fmt(alert.created_at)}</span></span>
                 </div>

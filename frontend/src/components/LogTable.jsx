@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 
 const COLS = [
     { key: 'timestamp', label: 'Timestamp' },
-    { key: 'user_id', label: 'User' },
+    { key: 'user_name', label: 'User' },
     { key: 'action', label: 'Action' },
     { key: 'resource', label: 'Resource' },
     { key: 'ip_address', label: 'IP' },
@@ -68,8 +68,8 @@ export default function LogTable({ logs = [] }) {
                                     key={c.key}
                                     onClick={() => handleSort(c.key)}
                                     className={`text-left px-4 py-3 text-slate-400 font-semibold text-xs uppercase tracking-wider ${c.key === 'timestamp' || c.key === 'anomaly_score'
-                                            ? 'cursor-pointer hover:text-white select-none'
-                                            : ''
+                                        ? 'cursor-pointer hover:text-white select-none'
+                                        : ''
                                         }`}
                                 >
                                     {c.label}
@@ -91,19 +91,19 @@ export default function LogTable({ logs = [] }) {
                         {visible.map((row, i) => (
                             <tr key={row.id || i} className={`border-b border-slate-700/40 hover:bg-slate-700/20 transition-colors ${rowCls(row)}`}>
                                 <td className="px-4 py-2.5 text-slate-300 whitespace-nowrap">{fmtDt(row.timestamp)}</td>
-                                <td className="px-4 py-2.5 text-slate-300">{row.user_id}</td>
+                                <td className="px-4 py-2.5 text-slate-300">{row.user_name || row.user_id}</td>
                                 <td className="px-4 py-2.5">
                                     <span className={`text-xs font-semibold px-2 py-0.5 rounded ${row.action === 'EXPORT' ? 'bg-red-500/20 text-red-400' :
-                                            row.action === 'EDIT' ? 'bg-amber-500/20 text-amber-400' :
-                                                'bg-slate-600/40 text-slate-300'
+                                        row.action === 'EDIT' ? 'bg-amber-500/20 text-amber-400' :
+                                            'bg-slate-600/40 text-slate-300'
                                         }`}>{row.action}</span>
                                 </td>
                                 <td className="px-4 py-2.5 text-slate-400 text-xs">{row.resource}</td>
                                 <td className="px-4 py-2.5 text-slate-400 font-mono text-xs">{row.ip_address}</td>
                                 <td className="px-4 py-2.5">
                                     <span className={`font-mono text-xs font-bold ${row.anomaly_score > 0.7 ? 'text-red-400' :
-                                            row.anomaly_score > 0.4 ? 'text-amber-400' :
-                                                'text-slate-400'
+                                        row.anomaly_score > 0.4 ? 'text-amber-400' :
+                                            'text-slate-400'
                                         }`}>{(row.anomaly_score || 0).toFixed(3)}</span>
                                 </td>
                                 <td className="px-4 py-2.5">
@@ -139,4 +139,4 @@ export default function LogTable({ logs = [] }) {
         </div>
     )
 }
- 
+

@@ -79,7 +79,10 @@ export default function Login() {
                 </form>
 
                 <p className="text-center text-slate-600 text-xs mt-5">
-                    Demo: admin1@securehealth.in · Doctor@123
+                    Admin: admin1@securehealth.in · Admin@123
+                </p>
+                <p className="text-center text-slate-600 text-xs mt-1">
+                    Doctor: doctor1@securehealth.in · Doctor@123 &nbsp;|&nbsp; Nurse: nurse1@securehealth.in · Nurse@123
                 </p>
             </div>
         </div>

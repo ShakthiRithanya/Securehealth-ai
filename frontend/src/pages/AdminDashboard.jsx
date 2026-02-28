@@ -39,6 +39,7 @@ export default function AdminDashboard() {
             const synthetic = {
                 id: msg.alert_id,
                 user_id: msg.user_id,
+                user_name: msg.user_name || null,
                 severity: msg.severity,
                 alert_type: msg.event === 'user_locked' ? 'manual_lock' : 'anomaly_detected',
                 auto_locked: msg.auto_locked || (msg.event === 'user_locked' ? 1 : 0),

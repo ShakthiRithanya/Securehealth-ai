@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import api from '../api/client'
+import { useAuth } from '../contexts/AuthContext'
 
 const riskColor = (s) => {
     if (s >= 0.65) return 'text-red-400'
@@ -14,6 +15,9 @@ const riskLabel = (s) => {
 }
 
 export default function PatientModal({ patientId, onClose }) {
+    const { user } = useAuth()
+    const isNurse = user?.role === 'nurse'
+
     const [patient, setPatient] = useState(null)
     const [loading, setLoading] = useState(true)
     const [editing, setEditing] = useState(false)
@@ -155,7 +159,14 @@ export default function PatientModal({ patientId, onClose }) {
                                     </div>
                                     <div>
                                         <label className="block text-slate-400 text-xs mb-1">Ward</label>
-                                        <input type="text" className="input-dark w-full" value={editForm.ward || ''} onChange={(e) => setEditForm({ ...editForm, ward: e.target.value })} />
+                                        <input
+                                            type="text"
+                                            className={`input-dark w-full ${isNurse ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            value={editForm.ward || ''}
+                                            onChange={(e) => !isNurse && setEditForm({ ...editForm, ward: e.target.value })}
+                                            disabled={isNurse}
+                                            title={isNurse ? "Nurses cannot edit ward" : ""}
+                                        />
                                     </div>
                                     <div>
                                         <label className="block text-slate-400 text-xs mb-1">State</label>
@@ -163,7 +174,14 @@ export default function PatientModal({ patientId, onClose }) {
                                     </div>
                                     <div>
                                         <label className="block text-slate-400 text-xs mb-1">Risk Score (0–1)</label>
-                                        <input type="number" step="0.01" min="0" max="1" className="input-dark w-full" value={editForm.risk_score || ''} onChange={(e) => setEditForm({ ...editForm, risk_score: parseFloat(e.target.value) })} />
+                                        <input
+                                            type="number" step="0.01" min="0" max="1"
+                                            className={`input-dark w-full ${isNurse ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            value={editForm.risk_score || ''}
+                                            onChange={(e) => !isNurse && setEditForm({ ...editForm, risk_score: parseFloat(e.target.value) })}
+                                            disabled={isNurse}
+                                            title={isNurse ? "Nurses cannot edit risk score" : ""}
+                                        />
                                     </div>
                                 </div>
                                 <button onClick={handleSave} disabled={saving} className="btn-primary py-2.5">

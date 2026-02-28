@@ -186,6 +186,11 @@ async def edit_patient(
         raise HTTPException(status_code=404, detail="patient not found")
     if user.role == "nurse" and p.ward not in nurse_wards(user):
         raise HTTPException(status_code=403, detail="access restricted to your assigned wards")
+    
+    if user.role == "nurse":
+        if body.ward is not None or body.risk_score is not None:
+            raise HTTPException(status_code=403, detail="Nurses are not allowed to edit ward or risk score")
+
     if body.age is not None:
         p.age = body.age
     if body.ward is not None:

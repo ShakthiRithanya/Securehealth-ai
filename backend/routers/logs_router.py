@@ -48,6 +48,24 @@ def my_logs(
     return [fmt(r) for r in rows]
 
 
+def _dedup(rows):
+    seen = []
+    for r in rows:
+        if seen:
+            prev = seen[-1]
+            same_user = prev["user_id"] == r["user_id"]
+            same_action = prev["action"] == r["action"]
+            same_resource = prev["resource"] == r["resource"]
+            time_diff = abs((prev["timestamp"] - r["timestamp"]).total_seconds())
+            if same_user and same_action and same_resource and time_diff <= 60:
+                prev["count"] = prev.get("count", 1) + 1
+                continue
+        entry = fmt(r)
+        entry["count"] = 1
+        seen.append(entry)
+    return seen
+
+
 @router.get("/")
 def all_logs(
     db: Session = Depends(get_db),
@@ -57,7 +75,7 @@ def all_logs(
     flagged: Optional[int] = Query(None),
     from_dt: Optional[str] = Query(None),
     to_dt: Optional[str] = Query(None),
-    limit: int = Query(200, le=1000),
+    limit: int = Query(100, le=1000),
 ):
     q = db.query(AccessLog)
     if user_id is not None:
@@ -71,7 +89,7 @@ def all_logs(
     if to_dt:
         q = q.filter(AccessLog.timestamp <= datetime.fromisoformat(to_dt))
     rows = q.order_by(AccessLog.timestamp.desc()).limit(limit).all()
-    return [fmt(r) for r in rows]
+    return _dedup(rows)
 
 
 @router.post("/")

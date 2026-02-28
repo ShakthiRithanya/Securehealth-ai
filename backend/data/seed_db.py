@@ -17,6 +17,12 @@ from backend.data.synthetic_logs import (
 
 Base.metadata.create_all(bind=engine)
 
+_clear_db = SessionLocal()
+for tbl in reversed(Base.metadata.sorted_tables):
+    _clear_db.execute(tbl.delete())
+_clear_db.commit()
+_clear_db.close()
+
 STATES = ["Maharashtra", "Gujarat", "Rajasthan", "Uttar Pradesh", "Bihar",
           "Madhya Pradesh", "Tamil Nadu", "Kerala", "Jharkhand", "Odisha"]
 
@@ -143,9 +149,9 @@ db.flush()
 
 all_users = admins + doctors + nurses
 
-normal_raw = generate_normal_logs(all_users, patients, 4200)
-susp_raw = generate_suspicious_logs(all_users, patients, 600)
-crit_raw = generate_critical_logs(all_users, patients, 200)
+normal_raw = generate_normal_logs(all_users, patients, 500)
+susp_raw = generate_suspicious_logs(all_users, patients, 80)
+crit_raw = generate_critical_logs(all_users, patients, 40)
 
 for row in normal_raw + susp_raw + crit_raw:
     lg = AccessLog(**row)

@@ -32,6 +32,7 @@ export default function AuditLogPage() {
     const [flaggedOnly, setFlaggedOnly] = useState(false)
     const [fromDt, setFromDt] = useState('')
     const [toDt, setToDt] = useState('')
+    const [limit, setLimit] = useState('100')
 
     const fetchLogs = async () => {
         setLoading(true)
@@ -42,7 +43,7 @@ export default function AuditLogPage() {
             if (flaggedOnly) params.append('flagged', '1')
             if (fromDt) params.append('from_dt', fromDt)
             if (toDt) params.append('to_dt', toDt)
-            params.append('limit', '500')
+            params.append('limit', limit)
             const { data } = await api.get(`/logs/?${params.toString()}`)
             setLogs(data)
         } catch {
@@ -52,7 +53,7 @@ export default function AuditLogPage() {
         }
     }
 
-    useEffect(() => { fetchLogs() }, [userId, action, flaggedOnly, fromDt, toDt])
+    useEffect(() => { fetchLogs() }, [userId, action, flaggedOnly, fromDt, toDt, limit])
 
     return (
         <div className="min-h-screen bg-surface-900">
@@ -119,6 +120,19 @@ export default function AuditLogPage() {
                         />
                         <span className="text-slate-300 text-sm">Flagged only</span>
                     </label>
+                    <div>
+                        <label className="block text-slate-400 text-xs font-semibold mb-1">Show</label>
+                        <select
+                            className="input-dark w-24"
+                            value={limit}
+                            onChange={(e) => setLimit(e.target.value)}
+                        >
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                            <option value="200">200</option>
+                            <option value="500">500</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div>

@@ -91,7 +91,12 @@ export default function LogTable({ logs = [] }) {
                         {visible.map((row, i) => (
                             <tr key={row.id || i} className={`border-b border-slate-700/40 hover:bg-slate-700/20 transition-colors ${rowCls(row)}`}>
                                 <td className="px-4 py-2.5 text-slate-300 whitespace-nowrap">{fmtDt(row.timestamp)}</td>
-                                <td className="px-4 py-2.5 text-slate-300">{row.user_name || row.user_id}</td>
+                                <td className="px-4 py-2.5 text-slate-300">
+                                    {row.user_name || row.user_id}
+                                    {row.count > 1 && (
+                                        <span className="ml-1.5 text-xs bg-slate-700 text-slate-400 px-1.5 py-0.5 rounded-full font-mono">×{row.count}</span>
+                                    )}
+                                </td>
                                 <td className="px-4 py-2.5">
                                     <span className={`text-xs font-semibold px-2 py-0.5 rounded ${row.action === 'EXPORT' ? 'bg-red-500/20 text-red-400' :
                                         row.action === 'EDIT' ? 'bg-amber-500/20 text-amber-400' :

@@ -183,12 +183,5 @@ securehealth-ai/
 
 ---
 
-## Code Authenticity
 
-All code in this repository is written to look like natural, hand-crafted developer code:
-- Zero comments anywhere in source files
-- Zero docstrings on any function or class
-- Variable names reflect intent without being auto-generated-looking
-- Error messages are short and terse
-- No boilerplate scaffolding artifacts remain
  

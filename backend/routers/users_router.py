@@ -6,22 +6,15 @@ from backend.database import get_db
 from backend.models import User
 from backend.auth import hash_password
 from backend.deps import require_admin
-
 router = APIRouter()
-
-
 class UserCreate(BaseModel):
     name: str
     email: str
     password: str
     role: str
     department: Optional[str] = None
-
-
 class LockToggle(BaseModel):
     is_locked: int
-
-
 def fmt(u: User):
     return {
         "id": u.id,
@@ -32,13 +25,9 @@ def fmt(u: User):
         "is_locked": u.is_locked,
         "created_at": u.created_at,
     }
-
-
 @router.get("/")
 def list_users(db: Session = Depends(get_db), _: User = Depends(require_admin)):
     return [fmt(u) for u in db.query(User).all()]
-
-
 @router.post("/")
 def create_user(body: UserCreate, db: Session = Depends(get_db), _: User = Depends(require_admin)):
     existing = db.query(User).filter(User.email == body.email).first()
@@ -55,8 +44,6 @@ def create_user(body: UserCreate, db: Session = Depends(get_db), _: User = Depen
     db.commit()
     db.refresh(u)
     return fmt(u)
-
-
 @router.patch("/{uid}/lock")
 def toggle_lock(uid: int, body: LockToggle, db: Session = Depends(get_db), _: User = Depends(require_admin)):
     u = db.query(User).filter(User.id == uid).first()
@@ -65,8 +52,6 @@ def toggle_lock(uid: int, body: LockToggle, db: Session = Depends(get_db), _: Us
     u.is_locked = body.is_locked
     db.commit()
     return {"id": u.id, "is_locked": u.is_locked}
-
-
 @router.delete("/{uid}")
 def delete_user(uid: int, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
     if uid == admin.id:

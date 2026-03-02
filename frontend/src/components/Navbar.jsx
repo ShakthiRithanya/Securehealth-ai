@@ -1,33 +1,27 @@
 import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-
 const roleMeta = {
     admin: { label: 'Admin', cls: 'bg-purple-500/20 text-purple-400' },
     doctor: { label: 'Doctor', cls: 'bg-blue-500/20 text-blue-400' },
     nurse: { label: 'Nurse', cls: 'bg-teal-500/20 text-teal-400' },
 }
-
 const linkCls = 'text-slate-400 hover:text-white text-sm font-medium transition-colors duration-150'
-
 export default function Navbar() {
     const { user, logout, isAdmin, isDoctor, isNurse } = useAuth()
     const nav = useNavigate()
-
     const handleLogout = () => {
         logout()
         nav('/')
     }
-
     const meta = roleMeta[user?.role] || { label: user?.role, cls: 'bg-slate-700 text-slate-300' }
-
     return (
-        <nav className="bg-slate-900/95 backdrop-blur border-b border-slate-700/60 px-6 py-3.5 flex items-center justify-between sticky top-0 z-50">
+        <nav className="bg-slate-900/60 backdrop-blur-2xl border-b border-white/5 px-8 py-4 flex items-center justify-between sticky top-0 z-50 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
             <div className="flex items-center gap-10">
-                <div className="flex items-center gap-2.5">
-                    <span className="text-2xl">🛡️</span>
-                    <span className="text-white font-bold text-base tracking-tight">
-                        Secure<span className="text-indigo-400">Health</span> AI
+                <div className="flex items-center gap-3">
+                    <span className="text-3xl drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]">🛡️</span>
+                    <span className="text-white font-extrabold text-lg tracking-tight">
+                        Secure<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">Health</span> AI
                     </span>
                 </div>
                 <div className="flex items-center gap-6">
@@ -49,7 +43,6 @@ export default function Navbar() {
                     )}
                 </div>
             </div>
-
             <div className="flex items-center gap-3">
                 <span className="text-slate-300 text-sm font-medium">{user?.name}</span>
                 <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${meta.cls}`}>

@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import LogTable from '../components/LogTable'
 import api from '../api/client'
-
 const ACTIONS = ['', 'VIEW', 'EDIT', 'EXPORT', 'LOGIN', 'LOGOUT']
-
 function toCSV(rows) {
     const headers = ['id', 'user_id', 'patient_id', 'action', 'resource', 'ip_address', 'timestamp', 'anomaly_score', 'flagged']
     const lines = [headers.join(',')]
@@ -13,7 +11,6 @@ function toCSV(rows) {
     }
     return lines.join('\n')
 }
-
 function downloadCSV(content, filename) {
     const blob = new Blob([content], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
@@ -23,7 +20,6 @@ function downloadCSV(content, filename) {
     a.click()
     URL.revokeObjectURL(url)
 }
-
 export default function AuditLogPage() {
     const [logs, setLogs] = useState([])
     const [loading, setLoading] = useState(false)
@@ -35,7 +31,6 @@ export default function AuditLogPage() {
     const [limit, setLimit] = useState('100')
     const [resourceFilter, setResourceFilter] = useState('')
     const [ipFilter, setIpFilter] = useState('')
-
     const fetchLogs = async () => {
         setLoading(true)
         try {
@@ -54,19 +49,16 @@ export default function AuditLogPage() {
             setLoading(false)
         }
     }
-
     useEffect(() => { fetchLogs() }, [userId, action, flaggedOnly, fromDt, toDt, limit])
-
     const filteredLogs = logs.filter((l) => {
         const matchResource = !resourceFilter || (l.resource || '').toLowerCase().includes(resourceFilter.toLowerCase())
         const matchIp = !ipFilter || (l.ip_address || '').toLowerCase().includes(ipFilter.toLowerCase())
         return matchResource && matchIp
     })
-
     return (
-        <div className="min-h-screen bg-surface-900">
+        <div className="min-h-screen bg-transparent relative">
             <Navbar />
-            <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col gap-6">
+            <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col gap-6 animate-fade-in z-10 relative">
                 <div className="flex items-start justify-between flex-wrap gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-white">Audit Log</h1>
@@ -79,7 +71,6 @@ export default function AuditLogPage() {
                         ⬇ Export CSV
                     </button>
                 </div>
-
                 <div className="card flex flex-wrap gap-4 items-end">
                     <div>
                         <label className="block text-slate-400 text-xs font-semibold mb-1">User ID</label>
@@ -162,7 +153,6 @@ export default function AuditLogPage() {
                         </div>
                     </div>
                 </div>
-
                 {loading ? (
                     <div className="text-center py-12 text-slate-500">Loading query results…</div>
                 ) : (

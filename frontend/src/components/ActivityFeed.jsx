@@ -1,5 +1,4 @@
 import React from 'react'
-
 const actionStyle = {
     VIEW: 'bg-slate-600/40 text-slate-300',
     EXPORT: 'bg-red-500/20 text-red-400',
@@ -7,17 +6,13 @@ const actionStyle = {
     LOGIN: 'bg-emerald-500/20 text-emerald-400',
     LOGOUT: 'bg-slate-600/30 text-slate-400',
 }
-
 const roleIcon = { admin: '🛡️', doctor: '👨‍⚕️', nurse: '👩‍⚕️' }
-
 function fmtTime(v) {
     if (!v) return '—'
     return new Date(v).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
-
 export default function ActivityFeed({ events = [], maxItems = 15, title = 'Live Activity' }) {
     const visible = events.slice(0, maxItems)
-
     return (
         <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
@@ -27,7 +22,6 @@ export default function ActivityFeed({ events = [], maxItems = 15, title = 'Live
                     <span className="ml-auto text-xs text-slate-500">{events.length} event{events.length !== 1 ? 's' : ''}</span>
                 )}
             </div>
-
             {visible.length === 0 ? (
                 <div className="text-center py-8 text-slate-600 text-sm">
                     <p className="text-2xl mb-2">📋</p>

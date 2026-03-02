@@ -5,9 +5,7 @@ import ThreatCard from '../components/ThreatCard'
 import ActivityFeed from '../components/ActivityFeed'
 import api from '../api/client'
 import useWebSocket from '../hooks/useWebSocket'
-
 const WS_URL = `ws://${window.location.host}/ws/alerts`
-
 export default function AdminDashboard() {
     const [users, setUsers] = useState([])
     const [alerts, setAlerts] = useState([])
@@ -16,28 +14,41 @@ export default function AdminDashboard() {
     const [activityFeed, setActivityFeed] = useState([])
     const [alertSeverityFilter, setAlertSeverityFilter] = useState('')
     const [activityActionFilter, setActivityActionFilter] = useState('')
-
     useEffect(() => {
         const load = async () => {
             try {
                 const [ur, ar, lr] = await Promise.all([
                     api.get('/users/'),
                     api.get('/alerts/'),
-                    api.get('/logs/?limit=200'),
+                    api.get('/logs/?limit=50'),
                 ])
                 setUsers(ur.data)
                 setAlerts(ar.data)
                 const today = new Date().toDateString()
-                setTodayLogs(lr.data.filter((l) => new Date(l.timestamp).toDateString() === today).length)
+                const allLogs = lr.data
+                setTodayLogs(allLogs.filter((l) => new Date(l.timestamp).toDateString() === today).length)
+                const seedEvents = allLogs.map((l) => ({
+                    log_id: l.id,
+                    event: 'patient_action',
+                    action: l.action,
+                    user_id: l.user_id,
+                    user_name: l.user_name,
+                    user_role: l.user_role,
+                    patient_id: l.patient_id,
+                    patient_name: l.patient_name,
+                    resource: l.resource,
+                    timestamp: l.timestamp,
+                    flagged: l.flagged,
+                    anomaly_score: l.anomaly_score,
+                }))
+                setActivityFeed(seedEvents)
             } catch {
-                // fetch error — silently degrade
             } finally {
                 setLoading(false)
             }
         }
         load()
     }, [])
-
     const handleWsMessage = useCallback((msg) => {
         if (msg.event === 'new_alert' || msg.event === 'user_locked') {
             const synthetic = {
@@ -57,37 +68,29 @@ export default function AdminDashboard() {
             setTodayLogs((n) => n + 1)
         }
     }, [])
-
     const { connected } = useWebSocket(WS_URL, handleWsMessage)
-
     const handleResolve = async (id) => {
         try {
             await api.post(`/alerts/${id}/resolve`)
             setAlerts((prev) => prev.filter((a) => a.id !== id))
         } catch {
-            // ignore
         }
     }
-
     const admins = users.filter((u) => u.role === 'admin').length
     const doctors = users.filter((u) => u.role === 'doctor').length
-
     const filteredAlerts = alerts.filter((a) => {
         if (!alertSeverityFilter) return true
         return a.severity === alertSeverityFilter
     })
-
     const filteredActivity = activityFeed.filter((a) => {
         if (!activityActionFilter) return true
         return a.action === activityActionFilter
     })
-
     return (
-        <div className="min-h-screen bg-surface-900">
+        <div className="min-h-screen bg-transparent relative">
             <Navbar />
-            <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col gap-8">
-
-                {/* Header */}
+            <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col gap-8 animate-fade-in z-10 relative">
+                { }
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
@@ -98,19 +101,16 @@ export default function AdminDashboard() {
                         <span className="text-slate-400">{connected ? 'Live' : 'Reconnecting…'}</span>
                     </div>
                 </div>
-
-                {/* Stats */}
+                { }
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <StatWidget label="Total Staff" value={users.length} accentColor="text-indigo-400" caption={`${admins} admins`} />
                     <StatWidget label="Doctors" value={doctors} accentColor="text-blue-400" />
                     <StatWidget label="Open Alerts" value={alerts.length} accentColor={alerts.length > 0 ? 'text-red-400' : 'text-emerald-400'} caption="Unresolved" />
                     <StatWidget label="Logs Today" value={todayLogs} accentColor="text-amber-400" />
                 </div>
-
-                {/* Twin panels */}
+                { }
                 <div className="grid lg:grid-cols-2 gap-6">
-
-                    {/* Security Alerts */}
+                    { }
                     <div className="flex flex-col gap-4">
                         <div className="flex items-center justify-between flex-wrap gap-2">
                             <h2 className="text-lg font-semibold text-white">
@@ -153,8 +153,7 @@ export default function AdminDashboard() {
                             </div>
                         )}
                     </div>
-
-                    {/* Live Patient Activity */}
+                    { }
                     <div className="card flex flex-col gap-4">
                         <div className="flex items-center justify-between mb-2">
                             <h2 className="text-slate-300 font-semibold text-sm">Activity Filter</h2>
@@ -183,7 +182,6 @@ export default function AdminDashboard() {
                         )}
                     </div>
                 </div>
-
             </div>
         </div>
     )

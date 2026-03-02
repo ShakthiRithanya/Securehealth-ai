@@ -1,19 +1,16 @@
 import React from 'react'
-
 const sevBadge = {
     low: 'badge-low',
     medium: 'badge-medium',
     high: 'badge-high',
     critical: 'badge-critical',
 }
-
 const sevBorder = {
     low: 'border-emerald-500/30',
     medium: 'border-amber-500/30',
     high: 'border-orange-500/30',
     critical: 'border-red-500/40',
 }
-
 function fmt(dt) {
     if (!dt) return '—'
     return new Date(dt).toLocaleString('en-IN', {
@@ -21,10 +18,8 @@ function fmt(dt) {
         hour: '2-digit', minute: '2-digit',
     })
 }
-
 export default function ThreatCard({ alert, onResolve }) {
     const sev = alert.severity || 'medium'
-
     return (
         <div className={`bg-slate-800 border ${sevBorder[sev] || 'border-slate-700'} rounded-xl p-4 flex items-start justify-between gap-4`}>
             <div className="flex flex-col gap-2 flex-1 min-w-0">
@@ -39,14 +34,12 @@ export default function ThreatCard({ alert, onResolve }) {
                         </span>
                     )}
                 </div>
-
                 <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-400">
                     <span>User: <span className="text-slate-200 font-medium">{alert.user_name || `#${alert.user_id}`}</span></span>
                     <span>Alert ID: <span className="text-slate-200 font-medium">#{alert.id}</span></span>
                     <span>Time: <span className="text-slate-200">{fmt(alert.created_at)}</span></span>
                 </div>
             </div>
-
             {onResolve && (
                 <button
                     onClick={() => onResolve(alert.id)}

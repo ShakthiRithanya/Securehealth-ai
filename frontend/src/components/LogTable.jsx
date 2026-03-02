@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-
 const COLS = [
     { key: 'timestamp', label: 'Timestamp' },
     { key: 'user_name', label: 'User' },
@@ -9,9 +8,7 @@ const COLS = [
     { key: 'anomaly_score', label: 'Score' },
     { key: 'flagged', label: 'Flagged' },
 ]
-
 const PAGE_SIZE = 50
-
 function fmtDt(v) {
     if (!v) return '—'
     return new Date(v).toLocaleString('en-IN', {
@@ -19,12 +16,10 @@ function fmtDt(v) {
         hour: '2-digit', minute: '2-digit', second: '2-digit',
     })
 }
-
 export default function LogTable({ logs = [] }) {
     const [sortKey, setSortKey] = useState('timestamp')
     const [sortAsc, setSortAsc] = useState(false)
     const [page, setPage] = useState(0)
-
     const sorted = [...logs].sort((a, b) => {
         let va = a[sortKey], vb = b[sortKey]
         if (sortKey === 'timestamp') {
@@ -35,10 +30,8 @@ export default function LogTable({ logs = [] }) {
         if (va > vb) return sortAsc ? 1 : -1
         return 0
     })
-
     const totalPages = Math.ceil(sorted.length / PAGE_SIZE)
     const visible = sorted.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE)
-
     const handleSort = (key) => {
         if (key !== 'timestamp' && key !== 'anomaly_score') return
         if (sortKey === key) {
@@ -49,14 +42,12 @@ export default function LogTable({ logs = [] }) {
         }
         setPage(0)
     }
-
     const rowCls = (row) => {
         if (row.flagged === 1 && row.anomaly_score > 0.7) return 'bg-red-900/20 border-l-2 border-red-500'
         if (row.flagged === 1) return 'bg-amber-900/15 border-l-2 border-amber-500'
         if (row.anomaly_score > 0.7) return 'bg-orange-900/10'
         return ''
     }
-
     return (
         <div className="flex flex-col gap-3">
             <div className="overflow-x-auto rounded-xl border border-slate-700">
@@ -123,7 +114,6 @@ export default function LogTable({ logs = [] }) {
                     </tbody>
                 </table>
             </div>
-
             {totalPages > 1 && (
                 <div className="flex items-center justify-between text-sm text-slate-400">
                     <span>Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, sorted.length)} of {sorted.length} logs</span>
@@ -144,4 +134,3 @@ export default function LogTable({ logs = [] }) {
         </div>
     )
 }
-

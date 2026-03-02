@@ -3,11 +3,9 @@ import Navbar from '../components/Navbar'
 import VoiceInput from '../components/VoiceInput'
 import QueryChat from '../components/QueryChat'
 import api from '../api/client'
-
 export default function PrivacyQueryPage() {
     const [messages, setMessages] = useState([])
     const [loading, setLoading] = useState(false)
-
     useEffect(() => {
         api.get('/agents/commands').then(({ data }) => {
             const history = data
@@ -21,7 +19,6 @@ export default function PrivacyQueryPage() {
             if (history.length > 0) setMessages(history)
         }).catch(() => { })
     }, [])
-
     const sendQuestion = async (question) => {
         setMessages((prev) => [...prev, { role: 'user', text: question }])
         setLoading(true)
@@ -34,18 +31,16 @@ export default function PrivacyQueryPage() {
             setLoading(false)
         }
     }
-
     return (
-        <div className="min-h-screen bg-surface-900 flex flex-col">
+        <div className="min-h-screen bg-transparent relative flex flex-col">
             <Navbar />
-            <div className="max-w-3xl mx-auto px-6 py-8 flex flex-col flex-1 gap-6 w-full">
+            <div className="max-w-3xl mx-auto px-6 py-8 flex flex-col flex-1 gap-6 w-full animate-fade-in z-10 relative">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Privacy Query Agent</h1>
                     <p className="text-slate-400 text-sm mt-1">
                         Ask questions about your patients · De-identified · Role-scoped · Gemini-powered
                     </p>
                 </div>
-
                 <div className="card flex items-center gap-4">
                     <VoiceInput
                         onTranscript={sendQuestion}
@@ -56,7 +51,6 @@ export default function PrivacyQueryPage() {
                         Try: "Show risk distribution" · "How many qualify for PMMVY?" · "Any high-risk patients in Ward D?"
                     </p>
                 </div>
-
                 <div className="card flex-1 flex flex-col min-h-[28rem]">
                     <QueryChat messages={messages} onSend={sendQuestion} loading={loading} />
                 </div>

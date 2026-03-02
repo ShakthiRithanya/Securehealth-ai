@@ -1,9 +1,7 @@
 import axios from 'axios'
-
 const api = axios.create({
     baseURL: '/api',
 })
-
 api.interceptors.request.use((config) => {
     const tok = localStorage.getItem('securehealth_token')
     if (tok) {
@@ -11,7 +9,6 @@ api.interceptors.request.use((config) => {
     }
     return config
 })
-
 api.interceptors.response.use(
     (res) => res,
     (err) => {
@@ -23,5 +20,4 @@ api.interceptors.response.use(
         return Promise.reject(err)
     }
 )
-
 export default api

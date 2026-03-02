@@ -1,6 +1,4 @@
 import pandas as pd
-
-
 FEATURE_COLS = [
     "access_count",
     "unique_patients",
@@ -12,19 +10,14 @@ FEATURE_COLS = [
     "avg_actions_per_min",
     "role_mismatch_flag",
 ]
-
-
 def extract_features(logs_df, users_df):
     if logs_df.empty:
         return pd.DataFrame()
-
     df = logs_df.copy()
     df["timestamp"] = pd.to_datetime(df["timestamp"])
     df["bucket"] = df["timestamp"].dt.floor("15min")
-
     role_map = users_df.set_index("id")["role"].to_dict()
     df["role"] = df["user_id"].map(role_map).fillna("unknown")
-
     rows = []
     for (uid, bucket), grp in df.groupby(["user_id", "bucket"]):
         role = grp["role"].iloc[0]
@@ -38,7 +31,6 @@ def extract_features(logs_df, users_df):
         ip_chg = 1 if ips > 1 else 0
         wk = 1 if bucket.weekday() >= 5 else 0
         apm = round(ac / 15, 4)
-
         mismatch = 0
         if role == "nurse":
             if exports > 0 or (grp["resource"] == "scheme_data").any():
@@ -46,9 +38,7 @@ def extract_features(logs_df, users_df):
         elif role == "doctor":
             if exports > 3:
                 mismatch = 1
-
         flagged = 1 if grp["flagged"].max() == 1 else 0
-
         rows.append({
             "user_id": uid,
             "bucket": bucket,
@@ -63,6 +53,4 @@ def extract_features(logs_df, users_df):
             "role_mismatch_flag": mismatch,
             "flagged": flagged,
         })
-
     return pd.DataFrame(rows)
- 

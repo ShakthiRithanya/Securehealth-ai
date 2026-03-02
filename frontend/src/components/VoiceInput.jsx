@@ -1,9 +1,7 @@
 import React from 'react'
 import useVoice from '../hooks/useVoice'
-
 export default function VoiceInput({ onTranscript, label = 'Voice Command' }) {
     const { listening, supported, startListening, stopListening } = useVoice()
-
     const toggle = () => {
         if (listening) {
             stopListening()
@@ -13,7 +11,6 @@ export default function VoiceInput({ onTranscript, label = 'Voice Command' }) {
             })
         }
     }
-
     return (
         <div className="flex items-center gap-3">
             <button

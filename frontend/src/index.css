@@ -9,59 +9,84 @@
 }
 
 body {
-  background-color: #0a0f1e;
+  background-color: #050510;
+  background-image: radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.1), transparent 25%), radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.08), transparent 25%);
   color: #e2e8f0;
   font-family: 'Inter', system-ui, sans-serif;
   min-height: 100vh;
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   background: #334155;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #4f46e5;
+  background: #6366f1;
 }
 
 @layer components {
   .card {
-    @apply bg-slate-800 border border-slate-700 rounded-xl p-5;
+    @apply bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl transition-all duration-300;
+  }
+
+  .card:hover {
+    @apply border-white/20 shadow-indigo-500/10;
   }
 
   .btn-primary {
-    @apply bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium py-2.5 px-5 rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-indigo-500/40 transform hover:-translate-y-0.5;
   }
 
   .btn-ghost {
-    @apply bg-transparent hover:bg-slate-700 text-slate-300 hover:text-white font-medium py-2 px-4 rounded-lg transition-all duration-200;
+    @apply bg-transparent hover:bg-slate-800/80 text-slate-300 hover:text-white font-medium py-2 px-4 rounded-xl transition-all duration-200 border border-transparent hover:border-slate-700;
   }
 
   .input-dark {
-    @apply bg-slate-900 border border-slate-600 text-slate-100 rounded-lg px-4 py-2 w-full focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder-slate-500;
+    @apply bg-slate-900/50 border border-slate-700/50 text-slate-100 rounded-xl px-4 py-2.5 w-full focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder-slate-500 transition-all backdrop-blur-sm;
+  }
+
+  .input-dark:focus {
+    @apply bg-slate-900/80 shadow-[0_0_15px] shadow-indigo-500/15;
   }
 
   .badge-low {
-    @apply bg-emerald-500/20 text-emerald-400 text-xs font-semibold px-2 py-0.5 rounded-full;
+    @apply bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-medium px-2.5 py-0.5 rounded-full shadow-[0_0_10px] shadow-emerald-500/10;
   }
 
   .badge-medium {
-    @apply bg-amber-500/20 text-amber-400 text-xs font-semibold px-2 py-0.5 rounded-full;
+    @apply bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-medium px-2.5 py-0.5 rounded-full shadow-[0_0_10px] shadow-amber-500/10;
   }
 
   .badge-high {
-    @apply bg-orange-500/20 text-orange-400 text-xs font-semibold px-2 py-0.5 rounded-full;
+    @apply bg-orange-500/10 text-orange-400 border border-orange-500/20 text-xs font-medium px-2.5 py-0.5 rounded-full shadow-[0_0_10px] shadow-orange-500/10;
   }
 
   .badge-critical {
-    @apply bg-red-500/20 text-red-400 text-xs font-semibold px-2 py-0.5 rounded-full;
+    @apply bg-red-500/10 text-red-400 border border-red-500/20 text-xs font-medium px-2.5 py-0.5 rounded-full shadow-[0_0_10px] shadow-red-500/10;
   }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
 }

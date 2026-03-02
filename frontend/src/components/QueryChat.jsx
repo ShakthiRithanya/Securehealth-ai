@@ -1,27 +1,23 @@
 import React, { useRef, useEffect } from 'react'
-
+import ReactMarkdown from 'react-markdown'
 export default function QueryChat({ messages = [], onSend, loading = false }) {
     const [text, setTextState] = React.useState('')
     const bottomRef = useRef(null)
-
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages, loading])
-
     const submit = () => {
         const trimmed = text.trim()
         if (!trimmed || loading) return
         onSend(trimmed)
         setTextState('')
     }
-
     const handleKey = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault()
             submit()
         }
     }
-
     return (
         <div className="flex flex-col h-full">
             <div className="flex-1 overflow-y-auto flex flex-col gap-3 px-1 py-2 min-h-0">
@@ -35,15 +31,23 @@ export default function QueryChat({ messages = [], onSend, loading = false }) {
                 {messages.map((m, i) => (
                     <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div
-                            className={`max-w-[78%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${m.role === 'user'
-                                    ? 'bg-indigo-600 text-white rounded-br-sm'
-                                    : 'bg-slate-700 text-slate-100 rounded-bl-sm border border-slate-600'
+                            className={`max-w-[85%] px-5 py-3.5 rounded-2xl text-sm leading-relaxed ${m.role === 'user'
+                                ? 'bg-indigo-600 text-white rounded-br-sm'
+                                : 'bg-slate-700 text-slate-100 rounded-bl-sm border border-slate-600 shadow-sm'
                                 }`}
                         >
                             {m.role === 'agent' && (
-                                <p className="text-xs text-indigo-400 font-semibold mb-1">🤖 Privacy Agent</p>
+                                <p className="text-xs text-indigo-400 font-bold mb-2 flex items-center gap-1">
+                                    <span>🤖</span> Privacy Agent
+                                </p>
                             )}
-                            {m.text}
+                            {m.role === 'agent' ? (
+                                <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-slate-800 prose-pre:border prose-pre:border-slate-700 marker:text-indigo-400">
+                                    <ReactMarkdown>{m.text}</ReactMarkdown>
+                                </div>
+                            ) : (
+                                m.text
+                            )}
                         </div>
                     </div>
                 ))}
@@ -56,7 +60,6 @@ export default function QueryChat({ messages = [], onSend, loading = false }) {
                 )}
                 <div ref={bottomRef} />
             </div>
-
             <div className="flex gap-2 pt-3 border-t border-slate-700 mt-3">
                 <input
                     className="input-dark flex-1"

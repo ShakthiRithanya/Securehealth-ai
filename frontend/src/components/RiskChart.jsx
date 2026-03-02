@@ -1,12 +1,10 @@
 import React from 'react'
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-
 const COLORS = {
     low: '#10b981',
     medium: '#f59e0b',
     high: '#ef4444',
 }
-
 const RADIAN = Math.PI / 180
 const renderLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, name, value }) => {
     const r = innerRadius + (outerRadius - innerRadius) * 0.5
@@ -18,14 +16,12 @@ const renderLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, name, value }
         </text>
     )
 }
-
 export default function RiskChart({ data = [] }) {
     const pieData = data.map((d) => ({
         name: d.bucket.charAt(0).toUpperCase() + d.bucket.slice(1),
         value: d.count,
         fill: COLORS[d.bucket] || '#6366f1',
     }))
-
     if (!pieData.length || pieData.every((d) => d.value === 0)) {
         return (
             <div className="flex items-center justify-center h-40 text-slate-500 text-sm">
@@ -33,7 +29,6 @@ export default function RiskChart({ data = [] }) {
             </div>
         )
     }
-
     return (
         <ResponsiveContainer width="100%" height={220}>
             <PieChart>

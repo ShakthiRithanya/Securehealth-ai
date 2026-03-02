@@ -1,5 +1,4 @@
 import React from 'react'
-
 export default function StatWidget({ label, value, accentColor = 'text-indigo-400', caption }) {
     return (
         <div className="card flex flex-col gap-1.5">

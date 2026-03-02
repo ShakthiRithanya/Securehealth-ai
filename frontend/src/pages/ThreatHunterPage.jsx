@@ -4,9 +4,7 @@ import VoiceInput from '../components/VoiceInput'
 import ThreatCard from '../components/ThreatCard'
 import api from '../api/client'
 import useWebSocket from '../hooks/useWebSocket'
-
 const WS_URL = `ws://${window.location.host}/ws/alerts`
-
 export default function ThreatHunterPage() {
     const [alerts, setAlerts] = useState([])
     const [scanStatus, setScanStatus] = useState('')
@@ -14,11 +12,9 @@ export default function ThreatHunterPage() {
     const [lastTranscript, setLastTranscript] = useState('')
     const [severityFilter, setSeverityFilter] = useState('')
     const [typeFilter, setTypeFilter] = useState('')
-
     useEffect(() => {
         api.get('/alerts/').then((r) => setAlerts(r.data)).catch(() => { })
     }, [])
-
     const handleWsMessage = useCallback((msg) => {
         if (msg.event === 'new_alert' || msg.event === 'user_locked') {
             setAlerts((prev) => [{
@@ -33,9 +29,7 @@ export default function ThreatHunterPage() {
             }, ...prev])
         }
     }, [])
-
     const { connected } = useWebSocket(WS_URL, handleWsMessage)
-
     const runScan = async (body = {}) => {
         setScanning(true)
         setScanStatus('Scanning…')
@@ -48,7 +42,6 @@ export default function ThreatHunterPage() {
             setScanning(false)
         }
     }
-
     const handleVoice = async (transcript) => {
         setLastTranscript(transcript)
         setScanning(true)
@@ -62,26 +55,22 @@ export default function ThreatHunterPage() {
             setScanning(false)
         }
     }
-
     const handleResolve = async (id) => {
         try {
             await api.post(`/alerts/${id}/resolve`)
             setAlerts((prev) => prev.filter((a) => a.id !== id))
         } catch {
-            // ignore
         }
     }
-
     const filteredAlerts = alerts.filter((a) => {
         const matchSeverity = !severityFilter || a.severity === severityFilter
         const matchType = !typeFilter || a.alert_type === typeFilter
         return matchSeverity && matchType
     })
-
     return (
-        <div className="min-h-screen bg-surface-900">
+        <div className="min-h-screen bg-transparent relative">
             <Navbar />
-            <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col gap-8">
+            <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col gap-8 animate-fade-in z-10 relative">
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-white">Threat Hunter Agent</h1>
@@ -92,7 +81,6 @@ export default function ThreatHunterPage() {
                         <span className="text-slate-400">{connected ? 'Live feed active' : 'Reconnecting…'}</span>
                     </div>
                 </div>
-
                 <div className="card flex flex-col gap-5">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                         <VoiceInput
@@ -114,7 +102,6 @@ export default function ThreatHunterPage() {
                             </button>
                         </div>
                     </div>
-
                     {(scanStatus || lastTranscript) && (
                         <div className="bg-slate-900/60 border border-slate-700 rounded-lg px-4 py-3 flex flex-col gap-1">
                             {lastTranscript && (
@@ -128,7 +115,6 @@ export default function ThreatHunterPage() {
                         </div>
                     )}
                 </div>
-
                 <div>
                     <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                         <h2 className="text-lg font-semibold text-white">
@@ -186,4 +172,3 @@ export default function ThreatHunterPage() {
         </div>
     )
 }
-

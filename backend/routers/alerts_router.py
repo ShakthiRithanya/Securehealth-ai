@@ -3,10 +3,7 @@ from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models import Alert, User
 from backend.deps import require_admin
-
 router = APIRouter()
-
-
 def fmt(a: Alert):
     return {
         "id": a.id,
@@ -19,8 +16,6 @@ def fmt(a: Alert):
         "auto_locked": a.auto_locked,
         "created_at": a.created_at,
     }
-
-
 @router.get("/")
 def list_alerts(db: Session = Depends(get_db), _: User = Depends(require_admin)):
     rows = (
@@ -30,8 +25,6 @@ def list_alerts(db: Session = Depends(get_db), _: User = Depends(require_admin))
         .all()
     )
     return [fmt(r) for r in rows]
-
-
 @router.post("/{aid}/resolve")
 def resolve_alert(aid: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
     a = db.query(Alert).filter(Alert.id == aid).first()
